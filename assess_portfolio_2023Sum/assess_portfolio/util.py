@@ -1,3 +1,24 @@
+"""MLT: Utility code.  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+Copyright 2017, Georgia Tech Research Corporation  		  	   		  		 			  		 			 	 	 		 		 	
+Atlanta, Georgia 30332-0415  		  	   		  		 			  		 			 	 	 		 		 	
+All Rights Reserved  		  	   		  		 			  		 			 	 	 		 		 	
+"""  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+import os  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+import pandas as pd  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  	
+               
+pathToCsvs = "/mnt/d/nomura/ml4t/ML4T_2023Sum/data"
+	 			  		 			 	 	 		 		 	  		  	   		  		 			  		 			 	 	 		 		 	
+def symbol_to_path(symbol, base_dir=None):  		  	   		  		 			  		 			 	 	 		 		 	
+    """Return CSV file path given ticker symbol."""  		  	   		  		 			  		 			 	 	 		 		 	
+    if base_dir is None:  		  	   		  		 			  		 			 	 	 		 		 	
+        base_dir = os.environ.get("MARKET_DATA_DIR", pathToCsvs) # "../data/")  		  	   		  		 			  		 			 	 	 		 		 	
+    return os.path.join(base_dir, "{}.csv".format(str(symbol)))  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
 def get_data(symbols, dates, addSPY=True, colname="Adj Close"):  		  	   		  		 			  		 			 	 	 		 		 	
     """Read stock data (adjusted close) for given symbols from CSV files."""  		  	   		  		 			  		 			 	 	 		 		 	
     df = pd.DataFrame(index=dates)  		  	   		  		 			  		 			 	 	 		 		 	
@@ -29,4 +50,29 @@ def plot_data(df, title="Stock prices", xlabel="Date", ylabel="Price"):
     ax = df.plot(title=title, fontsize=12)  		  	   		  		 			  		 			 	 	 		 		 	
     ax.set_xlabel(xlabel)  		  	   		  		 			  		 			 	 	 		 		 	
     ax.set_ylabel(ylabel)  		  	   		  		 			  		 			 	 	 		 		 	
-    plt.show()  		  	 
+    plt.show()  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+def get_orders_data_file(basefilename):  		  	   		  		 			  		 			 	 	 		 		 	
+    return open(  		  	   		  		 			  		 			 	 	 		 		 	
+        os.path.join(  		  	   		  		 			  		 			 	 	 		 		 	
+            os.environ.get("ORDERS_DATA_DIR", "orders/"), basefilename  		  	   		  		 			  		 			 	 	 		 		 	
+        )  		  	   		  		 			  		 			 	 	 		 		 	
+    )  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+def get_learner_data_file(basefilename):  		  	   		  		 			  		 			 	 	 		 		 	
+    return open(  		  	   		  		 			  		 			 	 	 		 		 	
+        os.path.join(  		  	   		  		 			  		 			 	 	 		 		 	
+            os.environ.get("LEARNER_DATA_DIR", "Data/"), basefilename  		  	   		  		 			  		 			 	 	 		 		 	
+        ),  		  	   		  		 			  		 			 	 	 		 		 	
+        "r",  		  	   		  		 			  		 			 	 	 		 		 	
+    )  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		 		 	
+def get_robot_world_file(basefilename):  		  	   		  		 			  		 			 	 	 		 		 	
+    return open(  		  	   		  		 			  		 			 	 	 		 		 	
+        os.path.join(  		  	   		  		 			  		 			 	 	 		 		 	
+            os.environ.get("ROBOT_WORLDS_DIR", "testworlds/"), basefilename  		  	   		  		 			  		 			 	 	 		 		 	
+        )  		  	   		  		 			  		 			 	 	 		 		 	
+    )  		  	   		  		 			  		 			 	 	 		 		 	

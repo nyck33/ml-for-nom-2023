@@ -51,27 +51,61 @@ def assess_portfolio(
     """  		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
     # Read in adjusted closing prices for given symbols, date range  		  	   		  		 			  		 			 	 	 		 		 	
-    dates = pd.date_range(sd, ed)  		  	   		  		 			  		 			 	 	 		 		 	
+    dates = pd.date_range(sd, ed)
+    # prices_all is a df  		  	   		  		 			  		 			 	 	 		 		 	
     prices_all = get_data(syms, dates)  # automatically adds SPY  		  	   		  		 			  		 			 	 	 		 		 	
     prices = prices_all[syms]  # only portfolio symbols  		  	   		  		 			  		 			 	 	 		 		 	
     prices_SPY = prices_all["SPY"]  # only SPY, for comparison later  		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
     # Get daily portfolio value  		  	   		  		 			  		 			 	 	 		 		 	
-    port_val = prices_SPY  # add code here to compute daily portfolio values  		  	   		  		 			  		 			 	 	 		 		 	
-  		  	   		  		 			  		 			 	 	 		 		 	
-    # Get portfolio statistics (note: std_daily_ret = volatility)  		  	   		  		 			  		 			 	 	 		 		 	
+    #port_val = prices_SPY  # add code here to compute daily portfolio values
+    # day one divide the sv by alloc over the portfolio should sum to sv
+    # I now have num shares for each stock, using this calculate pv on each day
+    
+    dayZeroPrices = prices.iloc[0, :]
+    dayZeroAllocsCash = np.array([(sv * x) for x in allocs])
+    dayZeroNumShares = dayZeroAllocsCash / dayZeroPrices
+    numSharesD = {syms[i]:dayZeroNumShares[i] for i in range(len(syms))}
+    
+    portfolioValsDf = prices_all.copy()
+    dailyReturns = np.zeros((portfolioValsDf.shape[0],1))
+    portfolioValCurr = 0.0
+    # iterate and multiply by num shares
+    for index, row in prices_all.iterrows():
+        for s in syms:
+            #multiply the price from prices_all by numShares
+            shareGrossVal = numSharesD[s] * row[s]
+            portfolioValsDf[s] = shareGrossVal
+            portfolioValCurr += shareGrossVal
+            if index > 0:
+                # div today's total portfolio value by sum of previous row
+                dailyReturns[index] = portfolioValCurr / portfolioValsDf[index].sum(axis=1)
+            else:
+                dailyReturns[index] = 0.
+          
+    	  	   		  		 			  		 			 	 	 		 		 	
+    # Get portfolio statistics (note: std_daily_ret = volatility)
+    # cumulative return, average daily returns,  		  	   
+    # standard deviation of daily returns, Sharpe ratio and end value    		  	   		  		 			  		 			 	 	 		 		 	
     cr, adr, sddr, sr = [  		  	   		  		 			  		 			 	 	 		 		 	
         0.25,  		  	   		  		 			  		 			 	 	 		 		 	
         0.001,  		  	   		  		 			  		 			 	 	 		 		 	
         0.0005,  		  	   		  		 			  		 			 	 	 		 		 	
         2.1,  		  	   		  		 			  		 			 	 	 		 		 	
-    ]  # add code here to compute stats  		  	   		  		 			  		 			 	 	 		 		 	
+    ]  # add code here to compute stats  	
+    
+    # cr, -1 to eliminate that intial division result which is wrt to first value such that the plots center around 0
+    cr = (portfolioValsDf.iloc[-1].sum() / portfolioValsDf.iloc[0].sum()) - 1
+    # adr, need daily returns then take mean
+    adr = dailyReturns.mean()
+    sddr = dailyReturns.std()
+    sr = 	  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
     # Compare daily portfolio value with SPY using a normalized plot  		  	   		  		 			  		 			 	 	 		 		 	
     if gen_plot:  		  	   		  		 			  		 			 	 	 		 		 	
         # add code to plot here  		  	   		  		 			  		 			 	 	 		 		 	
         df_temp = pd.concat(  		  	   		  		 			  		 			 	 	 		 		 	
-            [port_val, prices_SPY], keys=["Portfolio", "SPY"], axis=1  		  	   		  		 			  		 			 	 	 		 		 	
+            [portfolioValsDf, prices_SPY], keys=["Portfolio", "SPY"], axis=1  		  	   		  		 			  		 			 	 	 		 		 	
         )  		  	   		  		 			  		 			 	 	 		 		 	
         pass  		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
