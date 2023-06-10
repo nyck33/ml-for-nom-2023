@@ -20,14 +20,14 @@ def assess_portfolio(
         ed=dt.datetime(2009, 1, 1),
         syms=["GOOG", "AAPL", "GLD", "XOM"],
         allocs=[0.1, 0.2, 0.3, 0.4],
-        sv=1000000,
+        sv=1_000_000,
         rfr=0.0,
-        sf=252.0,
+        sf=252.0,  # sampling freq or trading days
         gen_plot=False,
 ):
     """  		  	   		  		 			  		 			 	 	 		 		 	
     Estimate a set of test points given the model we built.  		  	   		  		 			  		 			 	 	 		 		 	
-  		  	   		  		 			  		 			 	 	 		 		 	
+
     :param sd: A datetime object that represents the start date, defaults to 1/1/2008  		  	   		  		 			  		 			 	 	 		 		 	
     :type sd: datetime  		  	   		  		 			  		 			 	 	 		 		 	
     :param ed: A datetime object that represents the end date, defaults to 1/1/2009  		  	   		  		 			  		 			 	 	 		 		 	
@@ -61,7 +61,7 @@ def assess_portfolio(
     # port_val = prices_SPY  # add code here to compute daily portfolio values
     # day one divide the sv by alloc over the portfolio should sum to sv
     # I now have num shares for each stock, using this calculate pv on each day
-    #print(f'prices_all shape: {prices_all.shape}, prices_all[0]: {prices_all.iloc[0].values}')
+    # print(f'prices_all shape: {prices_all.shape}, prices_all[0]: {prices_all.iloc[0].values}')
 
     normed = prices / prices.iloc[0].values
     normed = pd.DataFrame(normed)
@@ -70,6 +70,30 @@ def assess_portfolio(
     pos_vals = alloced * sv
     pos_vals = pd.DataFrame(pos_vals)
     port_vals = pos_vals.sum(axis=1)
+
+    # do same for SPY but not sum
+    '''
+    normedSPY = pd.DataFrame(prices_SPY)
+    allocedSPY = normedSPY.values * 1.0
+    pos_valsSPY = allocedSPY * sv
+    pos_valsSPY = pd.DataFrame(pos_valsSPY)
+    '''
+
+
+    # day_i / day_(i-1) - 1
+    daily_rets = [((port_vals[i] / port_vals[i - 1]) - 1) for i in range(1, len(port_vals))]
+    daily_rets = [0] + daily_rets
+    daily_rets = np.asarray(daily_rets)
+    assert len(daily_rets) == len(port_vals)
+
+    # todo: do the daily rets for SPY then make another dataframe start at 1m and use the daily rets
+    #  to fill in values.
+
+    drspy = [((prices_SPY[i] / prices_SPY[i - 1]) - 1) for i in range(1, len(prices_SPY))]
+    drspy = [0] + drspy
+    #drspy = np.asarray(drspy)
+    drspy = pd.DataFrame(drspy)
+    spyVal, dailySpyVals = calculateSPYEndValFromSV(drspy, startingValue=1_000_000)
 
     # Get portfolio statistics (note: std_daily_ret = volatility)
     # cumulative return, average daily returns,  		  	   
@@ -80,22 +104,60 @@ def assess_portfolio(
         0.0005,
         2.1,
     ]  # add code here to compute stats  	
+    port_vals = pd.DataFrame(port_vals, columns=['daily_value'])
+    cr = (port_vals.iloc[-1].values / port_vals.iloc[0].values) - 1
+    adr = daily_rets.mean()
+    sddr = daily_rets.std()
+    sharpeRatioAdjustment = np.sqrt(sf)
+    # 10 basis points is 1 percent
+    basis_pt_factor = 10.
+    sr = sharpeRatioAdjustment * ((adr * basis_pt_factor - (calculate_daily_rf(rfr, sf) * basis_pt_factor)) / daily_rets.std())
 
-    cr = (port_vals.iloc[-1].values / port_vals.iloc[0].values) -1
-    adr =   		  		 			  		 			 	 	 		 		 	
-  	
+
     # Compare daily portfolio value with SPY using a normalized plot  		  	   		  		 			  		 			 	 	 		 		 	
     if gen_plot:
         # add code to plot here
+        dailySpyValsDf = pd.DataFrame(dailySpyVals, columns=['daily_value'])
+
         df_temp = pd.concat(
-            [port_vals, prices_SPY], keys=["Portfolio", "SPY"], axis=1
+            [port_vals, dailySpyValsDf], keys=["Portfolio", "SPY"], axis=1
         )
+
         plot_data(df_temp, title="Stock prices", xlabel="Date", ylabel="Price")
 
     # Add code here to properly compute end value  		  	   		  		 			  		 			 	 	 		 		 	
-    ev = sv
+    ev = port_vals['daily_value'].iloc[-1]
+    #ev = np.asarray(port_vals)[-1][0]
 
     return cr, adr, sddr, sr, ev
+
+def calculateSPYEndValFromSV(dailyReturnSPY, startingValue=1_000_000):
+    '''
+    dailyReturnSPY is the daily return of spy, now multiply by each days's return + 1 since there
+    negative values to get a final value and return
+    also need each day's value for plot
+    '''
+    dailyReturnSPY = np.asarray(dailyReturnSPY).flatten()
+    spyDailyVal = [0 for x in dailyReturnSPY]
+    spyDailyVal[0] = startingValue
+    for i in range(1, len(dailyReturnSPY)):
+        dailyReturn = dailyReturnSPY[i]
+        spyDailyVal[i] = spyDailyVal[i-1] * (1+dailyReturn)
+
+    finalValue = spyDailyVal[-1]
+    print(finalValue)
+    return finalValue, spyDailyVal
+
+
+def calculate_daily_rf(rfr, sf=252.0):
+    if rfr < -1.0:
+        raise ValueError("Risk-free rate cannot be negative.")
+    if sf <= 0.0:
+        raise ValueError("Sampling frequency must be positive.")
+    daily_rf = ((1 + rfr) ** (1 / sf)) - 1.0
+
+    return daily_rf
+
 
 
 def test_code():
@@ -123,7 +185,7 @@ def test_code():
         syms=symbols,
         allocs=allocations,
         sv=start_val,
-        gen_plot=False,
+        gen_plot=True,
     )
 
     # Print statistics  		  	   		  		 			  		 			 	 	 		 		 	
