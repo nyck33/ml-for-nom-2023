@@ -64,11 +64,12 @@ def assess_portfolio(
     # print(f'prices_all shape: {prices_all.shape}, prices_all[0]: {prices_all.iloc[0].values}')
 
     normed = prices / prices.iloc[0].values
+    # has dates
     normed = pd.DataFrame(normed)
     allocs = np.asarray(allocs)
-    alloced = normed.values * allocs
+
+    alloced = normed * allocs
     pos_vals = alloced * sv
-    pos_vals = pd.DataFrame(pos_vals)
     port_vals = pos_vals.sum(axis=1)
 
     # do same for SPY but not sum
@@ -91,9 +92,12 @@ def assess_portfolio(
 
     drspy = [((prices_SPY[i] / prices_SPY[i - 1]) - 1) for i in range(1, len(prices_SPY))]
     drspy = [0] + drspy
+    firstColName = 'values_spy'
+    prices_SPY = pd.DataFrame(prices_SPY.values,index=prices_SPY.index, columns=[firstColName])
     #drspy = np.asarray(drspy)
-    drspy = pd.DataFrame(drspy)
-    spyVal, dailySpyVals = calculateSPYEndValFromSV(drspy, startingValue=1_000_000)
+    prices_SPY.drop(firstColName, axis=1, inplace=True)
+    prices_SPY[firstColName] = drspy
+    spyVal, dailySpyValsDf = calculateSPYEndValFromSV(prices_SPY, startingValue=1_000_000)
 
     # Get portfolio statistics (note: std_daily_ret = volatility)
     # cumulative return, average daily returns,  		  	   
@@ -117,13 +121,13 @@ def assess_portfolio(
     # Compare daily portfolio value with SPY using a normalized plot  		  	   		  		 			  		 			 	 	 		 		 	
     if gen_plot:
         # add code to plot here
-        dailySpyValsDf = pd.DataFrame(dailySpyVals, columns=['daily_value'])
+        dailySpyValsDf.rename(columns={dailySpyValsDf.columns[0]: 'daily_value'}, inplace=True)
 
         df_temp = pd.concat(
             [port_vals, dailySpyValsDf], keys=["Portfolio", "SPY"], axis=1
         )
-
-        plot_data(df_temp, title="Stock prices", xlabel="Date", ylabel="Price")
+        df_dates = df_temp.loc[sd:ed]
+        plot_data(df_dates, title="Stock prices", xlabel="Date", ylabel="Price")
 
     # Add code here to properly compute end value  		  	   		  		 			  		 			 	 	 		 		 	
     ev = port_vals['daily_value'].iloc[-1]
@@ -131,22 +135,31 @@ def assess_portfolio(
 
     return cr, adr, sddr, sr, ev
 
+
 def calculateSPYEndValFromSV(dailyReturnSPY, startingValue=1_000_000):
     '''
     dailyReturnSPY is the daily return of spy, now multiply by each days's return + 1 since there
     negative values to get a final value and return
     also need each day's value for plot
     '''
-    dailyReturnSPY = np.asarray(dailyReturnSPY).flatten()
-    spyDailyVal = [0 for x in dailyReturnSPY]
+    firstColAsList = dailyReturnSPY.iloc[:, 0].tolist()
+    spyDailyVal = [0 for x in range(len(firstColAsList))]
     spyDailyVal[0] = startingValue
-    for i in range(1, len(dailyReturnSPY)):
-        dailyReturn = dailyReturnSPY[i]
+    for i in range(1, dailyReturnSPY.shape[0]):
+        dr = dailyReturnSPY.iat[i, 0]
+        dailyReturn = dailyReturnSPY.iloc[i,:].values[0]
         spyDailyVal[i] = spyDailyVal[i-1] * (1+dailyReturn)
-
+    '''
+    for idx, row in dailyReturnSPY.iterrows():
+        dailyReturn = row.values[0]
+        spyDailyVal[idx] = spyDailyVal[idx-1] * (1+dailyReturn)
+    '''
     finalValue = spyDailyVal[-1]
-    print(finalValue)
-    return finalValue, spyDailyVal
+    firstColName = dailyReturnSPY.columns[0]
+    dailyReturnSPY.drop(firstColName, axis=1, inplace=True)
+    dailyReturnSPY[firstColName] = spyDailyVal
+
+    return finalValue, dailyReturnSPY
 
 
 def calculate_daily_rf(rfr, sf=252.0):
