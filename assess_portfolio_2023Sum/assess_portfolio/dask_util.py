@@ -8,9 +8,13 @@ All Rights Reserved
 import os  		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
 import pandas as pd  	
-
+import dask.dataframe as dd
+import dask
 	  	   		  		 			  		 			 	 	 		 		 	
-pathToCsvs = "/mnt/d/nomura/ml4t/ML4T_2023Sum/data"
+  		  	   		  	
+               
+#pathToCsvs = "/mnt/d/fintech/ml4t/ML4T_2023Sum/data"
+pathToCsvs = "mnt/d/fintech/ml4t/ML4T_2023Sum/data"
 	 			  		 			 	 	 		 		 	  		  	   		  		 			  		 			 	 	 		 		 	
 	 			  		 			 	 	 		 		 	  		  	   		  		 			  		 			 	 	 		 		 	
 def symbol_to_path(symbol, base_dir=None):  		  	   		  		 			  		 			 	 	 		 		 	
@@ -22,14 +26,15 @@ def symbol_to_path(symbol, base_dir=None):
   		  	   		  		 			  		 			 	 	 		 		 	
 def get_data(symbols, dates, addSPY=True, colname="Adj Close"):  		  	   		  		 			  		 			 	 	 		 		 	
     """Read stock data (adjusted close) for given symbols from CSV files."""  		  	   		  		 			  		 			 	 	 		 		 	
-    df = pd.DataFrame(index=dates)  		  	   		  		 			  		 			 	 	 		 		 	
+    df = dd.DataFrame()
+      		  	   		  		 			  		 			 	 	 		 		 	
     if addSPY and "SPY" not in symbols:  # add SPY for reference, if absent  		  	   		  		 			  		 			 	 	 		 		 	
         symbols = ["SPY"] + list(  		  	   		  		 			  		 			 	 	 		 		 	
             symbols  		  	   		  		 			  		 			 	 	 		 		 	
         )  # handles the case where symbols is np array of 'object'  		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
     for symbol in symbols:  		  	   		  		 			  		 			 	 	 		 		 	
-        df_temp = pd.read_csv(  		  	   		  		 			  		 			 	 	 		 		 	
+        df_temp = dd.read_csv(  		  	   		  		 			  		 			 	 	 		 		 	
             symbol_to_path(symbol),  		  	   		  		 			  		 			 	 	 		 		 	
             index_col="Date",  		  	   		  		 			  		 			 	 	 		 		 	
             parse_dates=True,  		  	   		  		 			  		 			 	 	 		 		 	
@@ -58,26 +63,3 @@ def plot_data(df, title="Stock prices", xlabel="Date", ylabel="Price"):
     plt.show()  		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
-def get_orders_data_file(basefilename):  		  	   		  		 			  		 			 	 	 		 		 	
-    return open(  		  	   		  		 			  		 			 	 	 		 		 	
-        os.path.join(  		  	   		  		 			  		 			 	 	 		 		 	
-            os.environ.get("ORDERS_DATA_DIR", "orders/"), basefilename  		  	   		  		 			  		 			 	 	 		 		 	
-        )  		  	   		  		 			  		 			 	 	 		 		 	
-    )  		  	   		  		 			  		 			 	 	 		 		 	
-  		  	   		  		 			  		 			 	 	 		 		 	
-  		  	   		  		 			  		 			 	 	 		 		 	
-def get_learner_data_file(basefilename):  		  	   		  		 			  		 			 	 	 		 		 	
-    return open(  		  	   		  		 			  		 			 	 	 		 		 	
-        os.path.join(  		  	   		  		 			  		 			 	 	 		 		 	
-            os.environ.get("LEARNER_DATA_DIR", "Data/"), basefilename  		  	   		  		 			  		 			 	 	 		 		 	
-        ),  		  	   		  		 			  		 			 	 	 		 		 	
-        "r",  		  	   		  		 			  		 			 	 	 		 		 	
-    )  		  	   		  		 			  		 			 	 	 		 		 	
-  		  	   		  		 			  		 			 	 	 		 		 	
-  		  	   		  		 			  		 			 	 	 		 		 	
-def get_robot_world_file(basefilename):  		  	   		  		 			  		 			 	 	 		 		 	
-    return open(  		  	   		  		 			  		 			 	 	 		 		 	
-        os.path.join(  		  	   		  		 			  		 			 	 	 		 		 	
-            os.environ.get("ROBOT_WORLDS_DIR", "testworlds/"), basefilename  		  	   		  		 			  		 			 	 	 		 		 	
-        )  		  	   		  		 			  		 			 	 	 		 		 	
-    )  		  	   		  		 			  		 			 	 	 		 		 	

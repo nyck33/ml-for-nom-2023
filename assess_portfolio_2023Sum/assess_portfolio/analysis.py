@@ -127,6 +127,13 @@ def assess_portfolio(
             [port_vals, dailySpyValsDf], keys=["Portfolio", "SPY"], axis=1
         )
         df_dates = df_temp.loc[sd:ed]
+
+        dateIndexSeries = df_dates.index.to_series()
+
+        df_dates = pd.concat([dateIndexSeries.rename('Date'), df_dates], axis=1)
+
+        df_dates.to_csv('portVsSpy.csv', index=False)
+
         plot_data(df_dates, title="Stock prices", xlabel="Date", ylabel="Price")
 
     # Add code here to properly compute end value  		  	   		  		 			  		 			 	 	 		 		 	
