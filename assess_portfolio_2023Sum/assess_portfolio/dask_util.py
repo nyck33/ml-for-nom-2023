@@ -14,19 +14,21 @@ import dask
   		  	   		  	
                
 #pathToCsvs = "/mnt/d/fintech/ml4t/ML4T_2023Sum/data"
+#'/mnt/d/fintech/ml4t/assess_portfolio_2023Sum/assess_portfolio/mnt/d/fintech/ml4t/ML4T_2023Sum/data/SPY.csv
 pathToCsvs = "mnt/d/fintech/ml4t/ML4T_2023Sum/data"
 	 			  		 			 	 	 		 		 	  		  	   		  		 			  		 			 	 	 		 		 	
 	 			  		 			 	 	 		 		 	  		  	   		  		 			  		 			 	 	 		 		 	
-def symbol_to_path(symbol, base_dir=None):  		  	   		  		 			  		 			 	 	 		 		 	
+def symbol_to_path(symbol, base_dir="mnt/d/fintech/ml4t/ML4T_2023Sum/data"):  		  	   		  		 			  		 			 	 	 		 		 	
     """Return CSV file path given ticker symbol."""  		  	   		  		 			  		 			 	 	 		 		 	
     if base_dir is None:  		  	   		  		 			  		 			 	 	 		 		 	
-        base_dir = os.environ.get("MARKET_DATA_DIR", pathToCsvs) # "../data/")  		  	   		  		 			  		 			 	 	 		 		 	
+        base_dir = pathToCsvs#os.environ.get("MARKET_DATA_DIR", pathToCsvs) # "../data/")  		  	   		  		 			  		 			 	 	 		 		 	
     return os.path.join(base_dir, "{}.csv".format(str(symbol)))  		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
 def get_data(symbols, dates, addSPY=True, colname="Adj Close"):  		  	   		  		 			  		 			 	 	 		 		 	
     """Read stock data (adjusted close) for given symbols from CSV files."""  		  	   		  		 			  		 			 	 	 		 		 	
-    df = dd.DataFrame()
+    stock_df = None
+    base_dir = "mnt/d/fintech/ml4t/ML4T_2023Sum/data"
       		  	   		  		 			  		 			 	 	 		 		 	
     if addSPY and "SPY" not in symbols:  # add SPY for reference, if absent  		  	   		  		 			  		 			 	 	 		 		 	
         symbols = ["SPY"] + list(  		  	   		  		 			  		 			 	 	 		 		 	
@@ -35,18 +37,22 @@ def get_data(symbols, dates, addSPY=True, colname="Adj Close"):
   		  	   		  		 			  		 			 	 	 		 		 	
     for symbol in symbols:  		  	   		  		 			  		 			 	 	 		 		 	
         df_temp = dd.read_csv(  		  	   		  		 			  		 			 	 	 		 		 	
-            symbol_to_path(symbol),  		  	   		  		 			  		 			 	 	 		 		 	
-            index_col="Date",  		  	   		  		 			  		 			 	 	 		 		 	
-            parse_dates=True,  		  	   		  		 			  		 			 	 	 		 		 	
-            usecols=["Date", colname],  		  	   		  		 			  		 			 	 	 		 		 	
+            os.path.join(base_dir, "{}.csv".format(str(symbol))),  #symbol_to_path(symbol),
+
+            parse_dates=True,
+            usecols=["Date", colname],
             na_values=["nan"],  		  	   		  		 			  		 			 	 	 		 		 	
-        )  		  	   		  		 			  		 			 	 	 		 		 	
+        ).set_index('Date', sorted=True)
         df_temp = df_temp.rename(columns={colname: symbol})  		  	   		  		 			  		 			 	 	 		 		 	
-        df = df.join(df_temp)  		  	   		  		 			  		 			 	 	 		 		 	
-        if symbol == "SPY":  # drop dates SPY did not trade  		  	   		  		 			  		 			 	 	 		 		 	
-            df = df.dropna(subset=["SPY"])  		  	   		  		 			  		 			 	 	 		 		 	
+        if stock_df is None:
+            stock_df = df_temp
+        else:
+            stock_df = stock_df.join(df_temp)	  	   		  		 			  		 			 	 	 		 		 	
+        
+    #if symbol == "SPY":  # drop dates SPY did not trade  		  	   		  		 			  		 			 	 	 		 		 	
+    stock_df = stock_df.dropna(subset=["SPY"])
   		  	   		  		 			  		 			 	 	 		 		 	
-    return df  		  	   		  		 			  		 			 	 	 		 		 	
+    return stock_df  		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
 def plot_data(df, title="Stock prices", xlabel="Date", ylabel="Price"):  		  	   		  		 			  		 			 	 	 		 		 	
