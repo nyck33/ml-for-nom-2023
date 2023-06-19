@@ -21,7 +21,7 @@ pathToCsvs = "mnt/d/fintech/ml4t/ML4T_2023Sum/data"
 def symbol_to_path(symbol, base_dir="mnt/d/fintech/ml4t/ML4T_2023Sum/data"):  		  	   		  		 			  		 			 	 	 		 		 	
     """Return CSV file path given ticker symbol."""  		  	   		  		 			  		 			 	 	 		 		 	
     if base_dir is None:  		  	   		  		 			  		 			 	 	 		 		 	
-        base_dir = pathToCsvs#os.environ.get("MARKET_DATA_DIR", pathToCsvs) # "../data/")  		  	   		  		 			  		 			 	 	 		 		 	
+        base_dir = os.environ.get("MARKET_DATA_DIR", pathToCsvs) # "../data/")
     return os.path.join(base_dir, "{}.csv".format(str(symbol)))  		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	
   		  	   		  		 			  		 			 	 	 		 		 	

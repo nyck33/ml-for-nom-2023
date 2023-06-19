@@ -25,10 +25,13 @@ def get_data(symbols, dates, addSPY=True, colname="Adj Close"):
         symbols = ["SPY"] + list(  		  	   		  		 			  		 			 	 	 		 		 	
             symbols  		  	   		  		 			  		 			 	 	 		 		 	
         )  # handles the case where symbols is np array of 'object'  		  	   		  		 			  		 			 	 	 		 		 	
-  		  	   		  		 			  		 			 	 	 		 		 	
+  		  	   		  		 			  		 			 	 	 		#"D:\fintech\ml4t\ML4T_2023Sum\data\AAPL.csv"
     for symbol in symbols:
-        #path_to_csv = base_dir + "/" + symbol + ".csv"  		  	   		  		 			  		 			 	 	 		 		 	
-        df_temp = dd.read_csv(f"mnt/d/fintech/ml4t/ML4T_2023Sum/data/{symbol}.csv",
+        path_to_csv = f"/mnt/d/fintech/ml4t/ML4T_2023Sum/data/{symbol}.csv"
+
+        print(f'path_to_csv: {path_to_csv}')
+        df_temp = dd.read_csv(
+            path_to_csv,
             parse_dates=True,
             usecols=["Date", colname],
             na_values=["nan"]  		  	   		  		 			  		 			 	 	 		 		 	
@@ -99,6 +102,7 @@ def assess_portfolio(
     dates = pd.date_range(sd, ed)
     # prices_all is a df
     prices_all = get_data(syms, dates)  # automatically adds SPY
+    dummy = len(prices_all)
     prices = prices_all[syms]  # only portfolio symbols
     prices_SPY = prices_all["SPY"]  # only SPY, for comparison later
 
@@ -108,9 +112,10 @@ def assess_portfolio(
     # I now have num shares for each stock, using this calculate pv on each day
     # print(f'prices_all shape: {prices_all.shape}, prices_all[0]: {prices_all.iloc[0].values}')
 
-    normed = prices / prices.iloc[0].values
+    normed = prices / prices.iloc[0, 0].values
     # has dates
     normed = dd.DataFrame(normed)
+    dummy = len(normed)
     allocs = np.asarray(allocs)
 
     alloced = normed * allocs
